@@ -47,7 +47,7 @@ class PersonControllerTest {
     @ParameterizedTest
     @CsvSource(
             {"Raul Alzate,0",
-            "Raul Alzate,1"})
+            "Raul Alzate,1" })
     void post(String name, Integer times){
 
         if(times == 0) {
