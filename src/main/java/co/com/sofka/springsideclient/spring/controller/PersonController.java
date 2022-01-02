@@ -8,34 +8,43 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/person")
 public class PersonController {
 
+    Logger log = Logger.getLogger("personController");
+
     @Autowired
     PersonService personservices;
 
-    @PostMapping
-    public Mono<Void> post(@RequestBody Mono<Person> personMono){
+    @GetMapping
+    public Flux<Person> list() {
+        return personservices.listAll();
+    }
 
+    @PostMapping
+    public Mono<Void> post(@RequestBody Mono<Person> personMono) {
         //return personservices.insert(personMono);
         return personMono.flatMap(personservices::insert);
     }
 
     @GetMapping("/{id}")
-    public Mono<Person> getPerson(@PathVariable("id") String id){
-        return Mono.just(new Person());
+    public Mono<Person> getPerson(@PathVariable("id") String id) {
+       // return Mono.just(new Person());
+        return personservices.getById(id);
     }
 
     @PutMapping
-    public Mono<Void> update(@RequestBody Mono<Person> personMono){
-        return Mono.empty();
+    public Mono<Person> update(@RequestBody Mono<Person> personMono) {
+        //return Mono.empty();
+        return personservices.update(personMono);
     }
 
     @DeleteMapping("/{id}")
-    public Mono<Void> delete(@PathVariable("id") String id){
-        return Mono.empty();
+    public Mono<Void> delete(@PathVariable("id") String id) {
+        return personservices.delete(id);
     }
 /*
     @GetMapping
@@ -48,10 +57,5 @@ public class PersonController {
     }
     */
 
-    @GetMapping
-    public Flux<Person> list (){
 
-        return personservices.listAll();
-
-    }
 }

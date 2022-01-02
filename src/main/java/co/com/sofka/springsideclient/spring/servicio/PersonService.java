@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 @Service
@@ -28,7 +29,28 @@ public class PersonService {
         //.flatMap(repository::save)
     }
 
+
+    public Mono<Person> getById(String id) {
+        return repository.findById(id);
+    }
+
+    public Mono<Person> update(Mono<Person> person) {
+        return person.flatMap(persona -> {
+            System.out.println("persona = " + persona);
+            return repository.save(persona);
+        });
+    }
+
+
     private final BiFunction<PersonRepository, Person, Mono<Person>> validateBeforeInsert
             = (repo, person) -> repo.findByName(person.getName());
 
+
+    public Mono<Void> delete(String id) {
+        return getById(id).flatMap(persona -> {
+                    repository.delete(persona);
+                    return Mono.just(persona);
+                })
+                .then();
+    }
 }

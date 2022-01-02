@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +33,7 @@ class PersonControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
-//Pruebas funcionales
+    //Pruebas funcionales
     @MockBean
     private PersonRepository repository;
 
@@ -54,7 +55,8 @@ class PersonControllerTest {
             when(repository.findByName(name)).thenReturn(Mono.just(new Person()));
         }
 
-        if(times == 1) {
+        if(times == 1)
+        {
             when(repository.findByName(name)).thenReturn(Mono.empty());
         }
 
@@ -84,6 +86,11 @@ class PersonControllerTest {
 
     @Test
     void get(){
+        var personTest = new Person("Raul");
+        var id = "1";
+        when(repository.findById(id)).thenReturn(Mono.just(personTest));
+
+
         webTestClient.get()
                 .uri("/person/1")
                 .exchange()
@@ -93,41 +100,52 @@ class PersonControllerTest {
                     var person = personEntityExchangeResult.getResponseBody();
                     assert person != null;
                 });
+
+        Mockito.verify(repository).findById(id);
     }
 
 
     @Test
     void update(){
-        var request = Mono.just(new Person());
+
+        var nameUpdate = "Alzate";
+        var personSave = new Person(nameUpdate);
+        var request = Mono.just(new Person(nameUpdate));
+
+        //when(repository.findByName(name)).thenReturn(response);
+        when(repository.save(any())).thenReturn(request);
+
         webTestClient.put()
                 .uri("/person")
                 .body(request, Person.class)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody().isEmpty();
+                .expectBody()
+                .consumeWith(personEntityExchangeResult -> {
+                    var person = personEntityExchangeResult.getResponseBody();
+                    assert person != null;
+                });
+        Mockito.verify(repository).save(refEq(personSave));
     }
 
 
     @Test
     void delete(){
+
+        Person persona = new Person("Raul");
+        Mono<Person> request = Mono.just(persona);
+        when(repository.findById("1")).thenReturn(request);
+        when(repository.delete(persona)).thenReturn(Mono.empty());
+
         webTestClient.delete()
                 .uri("/person/1")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody().isEmpty();
+
+        Mockito.verify(repository).findById("1");
+        Mockito.verify(repository).delete(refEq(persona));
     }
-/*
-    @Test
-    void list(){
-        webTestClient.get()
-                .uri("/person")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$[0].name").isEqualTo("Raul Alzate")
-                .jsonPath("$[1].name").isEqualTo("Pedro");
-    }
-*/
 
     @Test
     void list() {
